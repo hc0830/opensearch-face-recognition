@@ -38,7 +38,7 @@ def main():
     # Create stack name prefix
     stack_prefix = f"OpenSearchFaceRecognition-{environment.title()}"
 
-    # Deploy OpenSearch stack
+    # Deploy OpenSearch stack (includes DynamoDB tables and S3 bucket)
     opensearch_stack = OpenSearchFaceRecognitionStack(
         app,
         f"{stack_prefix}-OpenSearch",
@@ -51,6 +51,9 @@ def main():
         app,
         f"{stack_prefix}-Lambda",
         opensearch_domain=opensearch_stack.opensearch_domain,
+        face_metadata_table=opensearch_stack.face_metadata_table,
+        user_vectors_table=opensearch_stack.user_vectors_table,
+        images_bucket=opensearch_stack.images_bucket,
         env=env,
         description="Lambda functions for face recognition processing",
     )
