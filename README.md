@@ -5,6 +5,8 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-14+-green.svg)](https://nodejs.org/)
 
+**Language**: [中文](README.md) | [English](README_EN.md)
+
 基于Amazon OpenSearch Service的企业级面部识别系统，用于替代AWS Rekognition Collection的限制，提供更好的扩展性和成本效益。
 
 ## 🎯 项目特点
