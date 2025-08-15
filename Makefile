@@ -164,3 +164,19 @@ logs: ## 查看Lambda函数日志
 monitor: ## 监控系统状态
 	@echo "$(BLUE)监控系统状态...$(RESET)"
 	watch -n 30 'make status'
+
+# WAF 相关命令
+deploy-waf: ## 单独部署WAF (在API Gateway创建后)
+	@echo "$(BLUE)部署WAF...$(RESET)"
+	$(PYTHON) scripts/deploy_waf.py
+	@echo "$(GREEN)✅ WAF部署完成$(RESET)"
+
+enable-waf: ## 启用WAF并重新部署
+	@echo "$(BLUE)启用WAF并重新部署...$(RESET)"
+	ENABLE_WAF=true $(CDK) deploy --all --require-approval never --app "python app_deploy.py"
+	@echo "$(GREEN)✅ WAF已启用$(RESET)"
+
+disable-waf: ## 禁用WAF并重新部署
+	@echo "$(BLUE)禁用WAF并重新部署...$(RESET)"
+	ENABLE_WAF=false $(CDK) deploy --all --require-approval never --app "python app_deploy.py"
+	@echo "$(GREEN)✅ WAF已禁用$(RESET)"
