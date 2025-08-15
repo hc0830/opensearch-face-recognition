@@ -37,9 +37,17 @@ class ApiGatewayStack(Stack):
         # 创建API资源和方法
         self._create_api_resources()
 
-        # 创建WAF（生产环境）
-        if env_name != "dev":
-            self._create_waf(env_name)
+        # 创建WAF（生产环境且启用WAF时）
+        # 可以通过环境变量 ENABLE_WAF=false 来禁用WAF
+        enable_waf = os.environ.get("ENABLE_WAF", "true").lower() == "true"
+        if env_name != "dev" and enable_waf:
+            try:
+                self._create_waf(env_name)
+            except Exception as e:
+                print(
+                    f"Warning: Failed to create WAF, continuing without WAF protection: {e}"
+                )
+                # 继续部署，但不使用WAF保护
 
     def _create_api_gateway(self, env_name: str) -> apigateway.RestApi:
         """创建API Gateway"""
@@ -346,12 +354,20 @@ class ApiGatewayStack(Stack):
             ),
         )
 
-        # 关联WAF到API Gateway
-        wafv2.CfnWebACLAssociation(
+        # 关联WAF到API Gateway - 添加显式依赖
+        association = wafv2.CfnWebACLAssociation(
             self,
             "WebACLAssociation",
             resource_arn=f"arn:aws:apigateway:{self.region}::/restapis/{self.api.rest_api_id}/stages/{self.env_name}",
             web_acl_arn=web_acl.attr_arn,
+        )
+
+        # 确保 WebACL 创建完成后再创建关联
+        association.add_dependency(web_acl)
+
+        # 输出 WebACL ARN 用于调试
+        cdk.CfnOutput(
+            self, "WebACLArn", value=web_acl.attr_arn, description="WAF WebACL ARN"
         )
 
         # 输出API信息
