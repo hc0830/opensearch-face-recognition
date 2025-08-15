@@ -299,11 +299,91 @@ class ApiGatewayStack(Stack):
                         response_templates={
                             "application/json": '{"status": "healthy", "timestamp": "$context.requestTime"}'
                         },
+                        response_parameters={
+                            "method.response.header.Access-Control-Allow-Origin": "'*'",
+                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                        },
                     )
                 ],
                 request_templates={"application/json": '{"statusCode": 200}'},
             ),
-            method_responses=[apigateway.MethodResponse(status_code="200")],
+            method_responses=[
+                apigateway.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+
+        # /stats 资源 - 系统统计信息
+        # 注意：当前使用Mock集成提供基础响应，生产环境中可以替换为Lambda函数实现
+        stats_resource = self.api.root.add_resource("stats")
+        stats_resource.add_method(
+            "GET",
+            apigateway.MockIntegration(
+                integration_responses=[
+                    apigateway.IntegrationResponse(
+                        status_code="200",
+                        response_templates={
+                            "application/json": '{"total_faces": 0, "total_collections": 0, "total_users": 0, "last_updated": "$context.requestTime"}'
+                        },
+                        response_parameters={
+                            "method.response.header.Access-Control-Allow-Origin": "'*'",
+                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                        },
+                    )
+                ],
+                request_templates={"application/json": '{"statusCode": 200}'},
+            ),
+            method_responses=[
+                apigateway.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+
+        # /collections 资源 - 集合管理
+        # 注意：当前使用Mock集成提供基础响应，生产环境中可以替换为Lambda函数实现
+        collections_resource = self.api.root.add_resource("collections")
+        collections_resource.add_method(
+            "GET",
+            apigateway.MockIntegration(
+                integration_responses=[
+                    apigateway.IntegrationResponse(
+                        status_code="200",
+                        response_templates={
+                            "application/json": '[{"id": "default", "name": "Default Collection", "face_count": 0, "created_at": "$context.requestTime"}]'
+                        },
+                        response_parameters={
+                            "method.response.header.Access-Control-Allow-Origin": "'*'",
+                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                        },
+                    )
+                ],
+                request_templates={"application/json": '{"statusCode": 200}'},
+            ),
+            method_responses=[
+                apigateway.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
         )
 
     def _create_waf(self, env_name: str):

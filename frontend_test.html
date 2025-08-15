@@ -425,7 +425,7 @@
             } catch (error) {
                 statusElement.className = 'status-item offline';
                 statusText.textContent = '离线 ❌';
-                addResult('error', 'API连接失败', `无法连接到 ${API_BASE_URL}，请确保Mock API服务器正在运行`);
+                addResult('error', 'API连接失败', `无法连接到 ${API_BASE_URL}，请检查网络连接和API服务状态`);
             }
         }
         
