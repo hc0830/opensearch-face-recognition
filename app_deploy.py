@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-OpenSearch Face Recognition System CDK Application
+OpenSearch Face Recognition System CDK Application - Deployment Version
 
-This is the main entry point for the CDK application that deploys
-the OpenSearch-based face recognition system.
+This version is optimized for deployment without circular dependencies.
+S3 triggers can be added manually after deployment if needed.
 """
 
 import os
@@ -84,9 +84,6 @@ def main():
     lambda_stack.add_dependency(opensearch_stack)
     api_stack.add_dependency(lambda_stack)
     monitoring_stack.add_dependency(api_stack)
-
-    # Setup S3 triggers after all dependencies are resolved
-    lambda_stack.setup_s3_triggers()
 
     # Add tags to all stacks
     for stack in [opensearch_stack, lambda_stack, api_stack, monitoring_stack]:
