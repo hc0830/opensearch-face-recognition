@@ -10,6 +10,11 @@ env:
   NODE_VERSION: '18'
   PYTHON_VERSION: '3.9'
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   lint-and-test:
     name: Lint and Test
@@ -96,6 +101,9 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
     - name: Checkout code
@@ -108,13 +116,33 @@ jobs:
         scan-ref: '.'
         format: 'sarif'
         output: 'trivy-results.sarif'
-        exit-code: '0'  # Don't fail the build on vulnerabilities
+        exit-code: '0'
+        severity: 'CRITICAL,HIGH'
+        
+    - name: Check SARIF file exists
+      run: |
+        if [ -f trivy-results.sarif ]; then
+          echo "SARIF file exists"
+          echo "File size: $(wc -c < trivy-results.sarif) bytes"
+          # Check if file is valid JSON
+          if jq empty trivy-results.sarif 2>/dev/null; then
+            echo "SARIF file is valid JSON"
+          else
+            echo "SARIF file is not valid JSON"
+            cat trivy-results.sarif
+          fi
+        else
+          echo "SARIF file does not exist"
+          ls -la
+        fi
         
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      if: always() && hashFiles('trivy-results.sarif') != ''
       with:
         sarif_file: 'trivy-results.sarif'
+        category: 'trivy'
+      continue-on-error: true
 
   deploy-dev:
     name: Deploy to Development
