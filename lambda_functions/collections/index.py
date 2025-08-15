@@ -58,8 +58,13 @@ def handle_list_collections() -> Dict[str, Any]:
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                "Access-Control-Allow-Headers": (
+                    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                    "X-Amz-Security-Token"
+                ),
+                "Access-Control-Allow-Methods": (
+                    "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                ),
             },
             "body": json.dumps(collections),
         }
@@ -80,8 +85,13 @@ def handle_get_collection(collection_id: str) -> Dict[str, Any]:
                 "headers": {
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                    "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                    "Access-Control-Allow-Headers": (
+                        "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                        "X-Amz-Security-Token"
+                    ),
+                    "Access-Control-Allow-Methods": (
+                        "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                    ),
                 },
                 "body": json.dumps(collection),
             }
@@ -118,8 +128,13 @@ def handle_create_collection(event) -> Dict[str, Any]:
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                "Access-Control-Allow-Headers": (
+                    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                    "X-Amz-Security-Token"
+                ),
+                "Access-Control-Allow-Methods": (
+                    "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                ),
             },
             "body": json.dumps(collection),
         }
@@ -147,8 +162,13 @@ def handle_update_collection(collection_id: str, event) -> Dict[str, Any]:
                 "headers": {
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                    "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                    "Access-Control-Allow-Headers": (
+                        "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                        "X-Amz-Security-Token"
+                    ),
+                    "Access-Control-Allow-Methods": (
+                        "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                    ),
                 },
                 "body": json.dumps(collection),
             }
@@ -172,7 +192,8 @@ def handle_delete_collection(collection_id: str) -> Dict[str, Any]:
         if face_count > 0:
             return create_error_response(
                 400,
-                f"Cannot delete collection with {face_count} faces. Delete faces first.",
+                f"Cannot delete collection with {face_count} faces. "
+                "Delete faces first.",
             )
 
         # 删除集合元数据
@@ -183,8 +204,13 @@ def handle_delete_collection(collection_id: str) -> Dict[str, Any]:
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                "Access-Control-Allow-Headers": (
+                    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                    "X-Amz-Security-Token"
+                ),
+                "Access-Control-Allow-Methods": (
+                    "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                ),
             },
             "body": json.dumps(
                 {"success": True, "message": f"Collection {collection_id} deleted"}
@@ -380,8 +406,11 @@ def create_error_response(status_code: int, error_message: str) -> Dict[str, Any
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+            "Access-Control-Allow-Headers": (
+                "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                "X-Amz-Security-Token"
+            ),
+            "Access-Control-Allow-Methods": ("OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"),
         },
         "body": json.dumps({"success": False, "error": error_message}),
     }

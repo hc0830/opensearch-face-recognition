@@ -65,8 +65,13 @@ def handle_get_stats() -> Dict[str, Any]:
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+                "Access-Control-Allow-Headers": (
+                    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                    "X-Amz-Security-Token"
+                ),
+                "Access-Control-Allow-Methods": (
+                    "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
+                ),
             },
             "body": json.dumps(stats),
         }
@@ -169,8 +174,11 @@ def create_error_response(status_code: int, error_message: str) -> Dict[str, Any
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD",
+            "Access-Control-Allow-Headers": (
+                "Content-Type,X-Amz-Date,Authorization,X-Api-Key,"
+                "X-Amz-Security-Token"
+            ),
+            "Access-Control-Allow-Methods": ("OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"),
         },
         "body": json.dumps({"success": False, "error": error_message}),
     }
