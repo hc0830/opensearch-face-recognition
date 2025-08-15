@@ -1,0 +1,25 @@
+# Global owners
+* @hc0830
+
+# Infrastructure and deployment
+/stacks/ @hc0830
+/scripts/ @hc0830
+*.yml @hc0830
+*.yaml @hc0830
+Makefile @hc0830
+package.json @hc0830
+requirements.txt @hc0830
+
+# Lambda functions
+/lambda_functions/ @hc0830
+
+# Documentation
+*.md @hc0830
+/docs/ @hc0830
+
+# GitHub configuration
+/.github/ @hc0830
+
+# Configuration files
+.env* @hc0830
+.gitignore @hc0830

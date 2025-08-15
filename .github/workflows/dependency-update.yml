@@ -1,0 +1,57 @@
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Update Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools
+        pip-compile --upgrade requirements.in || echo "No requirements.in found"
+        
+    - name: Update Node.js dependencies
+      run: |
+        npm update
+        npm audit fix || true
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: 'chore: update dependencies'
+        body: |
+          ## Dependency Updates
+          
+          This PR contains automated dependency updates:
+          
+          - Updated Python packages to latest compatible versions
+          - Updated Node.js packages to latest compatible versions
+          - Applied security fixes where available
+          
+          Please review the changes and test thoroughly before merging.
+        branch: dependency-updates
+        delete-branch: true
