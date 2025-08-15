@@ -16,7 +16,7 @@ def lambda_handler(event, context):
 
         # 获取HTTP方法
         http_method = event.get("httpMethod", "GET")
-        
+
         if http_method == "GET":
             return handle_health_check()
         else:
@@ -35,7 +35,7 @@ def handle_health_check() -> Dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat(),
             "service": "OpenSearch Face Recognition API",
             "version": "1.0.0",
-            "environment": os.environ.get("ENVIRONMENT", "unknown")
+            "environment": os.environ.get("ENVIRONMENT", "unknown"),
         }
 
         return {
