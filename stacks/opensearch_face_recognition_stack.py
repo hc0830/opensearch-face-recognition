@@ -105,13 +105,14 @@ class OpenSearchFaceRecognitionStack(Stack):
             ),
         )
 
-        # 添加访问策略
+        # 添加访问策略 - 对于VPC域，不使用IP限制，而是依赖安全组
         domain.add_access_policies(
             iam.PolicyStatement(
                 principals=[iam.AnyPrincipal()],
                 actions=["es:*"],
                 resources=[f"{domain.domain_arn}/*"],
-                conditions={"IpAddress": {"aws:SourceIp": ["10.0.0.0/16"]}},
+                # 移除IP条件，因为VPC域不支持IP基础的策略
+                # VPC域的访问控制通过安全组实现
             )
         )
 
