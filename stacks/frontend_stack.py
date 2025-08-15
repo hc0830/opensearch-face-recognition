@@ -8,7 +8,8 @@ from aws_cdk import (
     aws_iam as iam,
     RemovalPolicy,
     Duration,
-    CfnOutput
+    CfnOutput,
+    CustomResource,
 )
 from constructs import Construct
 
@@ -16,7 +17,7 @@ from constructs import Construct
 class FrontendStack(Stack):
     """
     CDK Stack for Face Recognition Frontend
-    
+
     This stack creates:
     - S3 bucket for hosting static frontend files
     - CloudFront distribution with Origin Access Control (OAC)
@@ -24,15 +25,18 @@ class FrontendStack(Stack):
     - Proper security configurations
     """
 
-    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, api_gateway_url: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Get account ID for unique bucket naming
         account_id = self.account
-        
+
         # Create S3 bucket for frontend hosting
         self.frontend_bucket = s3.Bucket(
-            self, "FrontendBucket",
+            self,
+            "FrontendBucket",
             bucket_name=f"face-recognition-frontend-{account_id}",
             # Security: Block all public access
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -49,24 +53,24 @@ class FrontendStack(Stack):
 
         # Create Origin Access Control (OAC) for secure CloudFront -> S3 access
         oac = cloudfront.OriginAccessControl(
-            self, "FrontendOAC",
+            self,
+            "FrontendOAC",
             description="OAC for Face Recognition Frontend S3 bucket",
             origin_access_control_origin_type=cloudfront.OriginAccessControlOriginType.S3,
             signing_behavior=cloudfront.OriginAccessControlSigningBehavior.ALWAYS,
-            signing_protocol=cloudfront.OriginAccessControlSigningProtocol.SIGV4
+            signing_protocol=cloudfront.OriginAccessControlSigningProtocol.SIGV4,
         )
 
         # Create CloudFront distribution
         self.distribution = cloudfront.Distribution(
-            self, "FrontendDistribution",
+            self,
+            "FrontendDistribution",
             comment="Face Recognition Frontend Distribution - Secure with OAC",
             default_root_object="index.html",
-            
             # Origin configuration
             default_behavior=cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(
-                    bucket=self.frontend_bucket,
-                    origin_access_control=oac
+                    bucket=self.frontend_bucket, origin_access_control=oac
                 ),
                 # Security: Force HTTPS
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -80,32 +84,28 @@ class FrontendStack(Stack):
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD,
                 cached_methods=cloudfront.CachedMethods.CACHE_GET_HEAD,
             ),
-            
             # Security: Modern protocols and TLS
             http_version=cloudfront.HttpVersion.HTTP2_AND_3,
             minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
-            
             # Performance: Global edge locations
             price_class=cloudfront.PriceClass.PRICE_CLASS_ALL,
-            
             # Features: Enable IPv6
             enable_ipv6=True,
-            
             # Error handling: Custom error responses
             error_responses=[
                 cloudfront.ErrorResponse(
                     http_status=404,
                     response_http_status=200,
                     response_page_path="/index.html",
-                    ttl=Duration.minutes(5)
+                    ttl=Duration.minutes(5),
                 ),
                 cloudfront.ErrorResponse(
                     http_status=403,
                     response_http_status=200,
                     response_page_path="/index.html",
-                    ttl=Duration.minutes(5)
-                )
-            ]
+                    ttl=Duration.minutes(5),
+                ),
+            ],
         )
 
         # Grant CloudFront access to S3 bucket
@@ -120,21 +120,22 @@ class FrontendStack(Stack):
                     "StringEquals": {
                         "AWS:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/{self.distribution.distribution_id}"
                     }
-                }
+                },
             )
         )
 
         # Create frontend assets directory if it doesn't exist
         frontend_assets_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
-        
+
         # Deploy frontend files to S3
         self.deployment = s3deploy.BucketDeployment(
-            self, "FrontendDeployment",
+            self,
+            "FrontendDeployment",
             sources=[
                 # Deploy the frontend_test.html as index.html
                 s3deploy.Source.asset(
                     os.path.dirname(__file__) + "/..",
-                    exclude=["*", "!frontend_test.html"]
+                    exclude=["*", "!frontend_test.html"],
                 )
             ],
             destination_bucket=self.frontend_bucket,
@@ -145,70 +146,73 @@ class FrontendStack(Stack):
             # Cache invalidation
             prune=True,
             # Metadata
-            metadata={
-                "project": "face-recognition",
-                "deployed-by": "cdk"
-            }
+            metadata={"project": "face-recognition", "deployed-by": "cdk"},
         )
 
         # Create a custom resource to copy and rename the file
         from aws_cdk import custom_resources as cr
-        
+
         # Custom resource to handle file renaming
         rename_file_provider = cr.Provider(
-            self, "RenameFileProvider",
-            on_event_handler=self._create_rename_lambda()
+            self, "RenameFileProvider", on_event_handler=self._create_rename_lambda()
         )
-        
-        rename_file_resource = cdk.CustomResource(
-            self, "RenameFileResource",
+
+        rename_file_resource = CustomResource(
+            self,
+            "RenameFileResource",
             service_token=rename_file_provider.service_token,
             properties={
                 "BucketName": self.frontend_bucket.bucket_name,
                 "SourceKey": "frontend_test.html",
                 "DestinationKey": "index.html",
                 "DistributionId": self.distribution.distribution_id,
-                "ApiGatewayUrl": api_gateway_url
-            }
+                "ApiGatewayUrl": api_gateway_url,
+            },
         )
-        
+
         # Ensure deployment happens before renaming
         rename_file_resource.node.add_dependency(self.deployment)
 
         # Outputs
         CfnOutput(
-            self, "FrontendBucketName",
+            self,
+            "FrontendBucketName",
             value=self.frontend_bucket.bucket_name,
-            description="S3 bucket name for frontend hosting"
+            description="S3 bucket name for frontend hosting",
         )
-        
+
         CfnOutput(
-            self, "CloudFrontDistributionId",
+            self,
+            "CloudFrontDistributionId",
             value=self.distribution.distribution_id,
-            description="CloudFront distribution ID"
+            description="CloudFront distribution ID",
         )
-        
+
         CfnOutput(
-            self, "CloudFrontDomainName",
+            self,
+            "CloudFrontDomainName",
             value=self.distribution.distribution_domain_name,
-            description="CloudFront distribution domain name"
+            description="CloudFront distribution domain name",
         )
-        
+
         CfnOutput(
-            self, "FrontendUrl",
+            self,
+            "FrontendUrl",
             value=f"https://{self.distribution.distribution_domain_name}",
-            description="Frontend application URL"
+            description="Frontend application URL",
         )
 
     def _create_rename_lambda(self):
         """Create Lambda function for renaming files and updating API URL"""
         from aws_cdk import aws_lambda as lambda_
-        
+
         return lambda_.Function(
-            self, "RenameFileLambda",
+            self,
+            "RenameFileLambda",
             runtime=lambda_.Runtime.PYTHON_3_9,
             handler="index.handler",
-            code=lambda_.Code.from_inline("""
+            code=lambda_.Code.from_inline(
+                """
 import boto3
 import json
 import urllib3
@@ -288,6 +292,7 @@ def send_response(event, context, status, data):
     response = http.request('PUT', event['ResponseURL'], 
                           body=json.dumps(response_body).encode('utf-8'),
                           headers={'Content-Type': 'application/json'})
-"""),
-            timeout=Duration.minutes(5)
+"""
+            ),
+            timeout=Duration.minutes(5),
         )

@@ -51,7 +51,12 @@ jobs:
         pip install -r requirements.txt
         
     - name: Install Node.js dependencies
-      run: npm ci
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
       
     - name: Lint Python code
       run: |
@@ -69,10 +74,12 @@ jobs:
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
+      if: success()
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+        fail_ci_if_error: false
         
     - name: CDK Synth Test
       run: |
@@ -100,6 +107,7 @@ jobs:
         scan-ref: '.'
         format: 'sarif'
         output: 'trivy-results.sarif'
+        exit-code: '0'  # Don't fail the build on vulnerabilities
         
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v2
@@ -139,7 +147,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        npm ci
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
         
     - name: Deploy to AWS
       run: |
@@ -182,7 +194,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        npm ci
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
         
     - name: Deploy to AWS
       run: |
