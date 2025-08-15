@@ -66,6 +66,9 @@ def main():
         index_face_function=lambda_stack.index_face_function,
         search_faces_function=lambda_stack.search_faces_function,
         delete_face_function=lambda_stack.delete_face_function,
+        stats_function=lambda_stack.stats_function,
+        collections_function=lambda_stack.collections_function,
+        health_function=lambda_stack.health_function,
         env=env,
         description="API Gateway for face recognition REST API",
     )
