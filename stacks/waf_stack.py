@@ -22,7 +22,7 @@ class WAFStack(Stack):
         construct_id: str,
         api_gateway_id: str,
         stage_name: str,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -82,7 +82,8 @@ class WAFStack(Stack):
                     override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
                     statement=wafv2.CfnWebACL.StatementProperty(
                         managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
-                            vendor_name="AWS", name="AWSManagedRulesKnownBadInputsRuleSet"
+                            vendor_name="AWS",
+                            name="AWSManagedRulesKnownBadInputsRuleSet",
                         )
                     ),
                     visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
