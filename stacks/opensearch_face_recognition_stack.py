@@ -90,9 +90,12 @@ class OpenSearchFaceRecognitionStack(Stack):
                 volume_type=ec2.EbsDeviceVolumeType.GP3,
             ),
             vpc=self.vpc,
-            vpc_subnets=ec2.SubnetSelection(
-                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
-            ),
+            vpc_subnets=[
+                ec2.SubnetSelection(
+                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                    availability_zones=[self.vpc.availability_zones[0]],
+                )
+            ],
             security_groups=[self._create_opensearch_security_group()],
             node_to_node_encryption=True,
             encryption_at_rest=elasticsearch.EncryptionAtRestOptions(enabled=True),
