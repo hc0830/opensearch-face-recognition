@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "OpenSearch-based face recognition system to replace AWS Rekognition Collection",
   "main": "app.py",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "cdk synth",
     "deploy": "cdk deploy --all",

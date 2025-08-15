@@ -52,13 +52,16 @@ class FrontendStack(Stack):
         )
 
         # Create Origin Access Control (OAC) for secure CloudFront -> S3 access
-        oac = cloudfront.OriginAccessControl(
+        oac = cloudfront.CfnOriginAccessControl(
             self,
             "FrontendOAC",
-            description="OAC for Face Recognition Frontend S3 bucket",
-            origin_access_control_origin_type=cloudfront.OriginAccessControlOriginType.S3,
-            signing_behavior=cloudfront.OriginAccessControlSigningBehavior.ALWAYS,
-            signing_protocol=cloudfront.OriginAccessControlSigningProtocol.SIGV4,
+            origin_access_control_config=cloudfront.CfnOriginAccessControl.OriginAccessControlConfigProperty(
+                name="FaceRecognitionFrontendOAC",
+                description="OAC for Face Recognition Frontend S3 bucket",
+                origin_access_control_origin_type="s3",
+                signing_behavior="always",
+                signing_protocol="sigv4",
+            ),
         )
 
         # Create CloudFront distribution
@@ -70,7 +73,7 @@ class FrontendStack(Stack):
             # Origin configuration
             default_behavior=cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(
-                    bucket=self.frontend_bucket, origin_access_control=oac
+                    bucket=self.frontend_bucket
                 ),
                 # Security: Force HTTPS
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,

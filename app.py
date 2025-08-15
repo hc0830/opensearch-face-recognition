@@ -85,9 +85,6 @@ def main():
     api_stack.add_dependency(lambda_stack)
     monitoring_stack.add_dependency(api_stack)
 
-    # Setup S3 triggers after all dependencies are resolved
-    lambda_stack.setup_s3_triggers()
-
     # Add tags to all stacks
     for stack in [opensearch_stack, lambda_stack, api_stack, monitoring_stack]:
         stack.tags.set_tag("Project", "OpenSearchFaceRecognition")

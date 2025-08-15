@@ -52,7 +52,8 @@ class LambdaStack(Stack):
             "batch_process": self.batch_process_function,
         }
 
-        # 注意：S3触发器需要在所有stack创建完成后单独设置，以避免循环依赖
+        # TODO: 设置S3触发器 - 暂时注释以避免循环依赖
+        # self._setup_s3_triggers()
 
     def _create_dependencies_layer(self) -> _lambda.LayerVersion:
         """创建依赖层"""
@@ -209,10 +210,6 @@ class LambdaStack(Stack):
                 resources=["*"],
             )
         )
-
-    def setup_s3_triggers(self):
-        """公共方法：设置S3触发器（在所有stack创建完成后调用）"""
-        self._setup_s3_triggers()
 
     def _setup_s3_triggers(self):
         """设置S3触发器"""

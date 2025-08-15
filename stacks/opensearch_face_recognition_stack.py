@@ -38,9 +38,6 @@ class OpenSearchFaceRecognitionStack(Stack):
         # 创建S3存储桶
         self.images_bucket = self._create_images_bucket(project_name, env_name)
 
-        # 创建IAM角色
-        self.lambda_execution_role = self._create_lambda_execution_role()
-
         # 输出重要资源信息
         self._create_outputs()
 
@@ -217,78 +214,7 @@ class OpenSearchFaceRecognitionStack(Stack):
 
         return bucket
 
-    def _create_lambda_execution_role(self) -> iam.Role:
-        """创建Lambda执行角色"""
-        role = iam.Role(
-            self,
-            "LambdaExecutionRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "service-role/AWSLambdaVPCAccessExecutionRole"
-                )
-            ],
-        )
 
-        # 添加OpenSearch访问权限
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "es:ESHttpGet",
-                    "es:ESHttpPost",
-                    "es:ESHttpPut",
-                    "es:ESHttpDelete",
-                    "es:ESHttpHead",
-                ],
-                resources=[f"{self.opensearch_domain.domain_arn}/*"],
-            )
-        )
-
-        # 添加DynamoDB访问权限
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "dynamodb:GetItem",
-                    "dynamodb:PutItem",
-                    "dynamodb:UpdateItem",
-                    "dynamodb:DeleteItem",
-                    "dynamodb:Query",
-                    "dynamodb:Scan",
-                ],
-                resources=[
-                    self.face_metadata_table.table_arn,
-                    f"{self.face_metadata_table.table_arn}/index/*",
-                    self.user_vectors_table.table_arn,
-                ],
-            )
-        )
-
-        # 添加S3访问权限
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-                resources=[f"{self.images_bucket.bucket_arn}/*"],
-            )
-        )
-
-        # 添加Rekognition访问权限
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "rekognition:DetectFaces",
-                    "rekognition:IndexFaces",
-                    "rekognition:SearchFaces",
-                    "rekognition:SearchFacesByImage",
-                    "rekognition:CreateCollection",
-                    "rekognition:DeleteCollection",
-                    "rekognition:ListCollections",
-                    "rekognition:ListFaces",
-                ],
-                resources=["*"],
-            )
-        )
-
-        return role
 
     def _create_outputs(self):
         """创建CloudFormation输出"""

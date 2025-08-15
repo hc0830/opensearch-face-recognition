@@ -17,7 +17,7 @@ Please provide some context for your question:
 
 ## Environment (if relevant)
 - **OS**: [e.g. macOS 12.0, Ubuntu 20.04, Windows 11]
-- **Python Version**: [e.g. 3.9.7]
+- **Python Version**: [e.g. 3.12.0]
 - **Node.js Version**: [e.g. 18.17.0]
 - **AWS CDK Version**: [e.g. 2.95.1]
 - **AWS Region**: [e.g. us-east-1]

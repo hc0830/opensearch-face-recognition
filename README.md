@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS](https://img.shields.io/badge/AWS-CDK-orange.svg)](https://aws.amazon.com/cdk/)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-14+-green.svg)](https://nodejs.org/)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-green.svg)](https://nodejs.org/)
 
 **Language**: [中文](README.md) | [English](README_EN.md)
 
@@ -53,8 +53,8 @@
 
 ### 前置要求
 
-- **Node.js** >= 14.x
-- **Python** >= 3.8
+- **Node.js** >= 24.x
+- **Python** >= 3.12
 - **AWS CLI** 已配置
 - **CDK CLI** 已安装
 
