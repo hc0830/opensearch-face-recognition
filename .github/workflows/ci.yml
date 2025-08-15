@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '18'
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.12'
 
 permissions:
   contents: read
@@ -237,8 +237,10 @@ jobs:
     - name: Deploy to AWS
       run: |
         # Use deployment-ready app version (no circular dependencies)
+        # Temporarily disable WAF to avoid association issues
         npx cdk deploy --all --require-approval never --app "python app_deploy.py"
       env:
         ENVIRONMENT: prod
         CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
         CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        ENABLE_WAF: false
