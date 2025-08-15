@@ -49,34 +49,41 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 black pytest
         
     - name: Install Node.js dependencies
       run: npm ci
       
     - name: Lint Python code
       run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,deploy_venv,mock_venv,node_modules,cdk.out,archive
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=venv,deploy_venv,mock_venv,node_modules,cdk.out,archive
         
     - name: Format check Python code
-      run: black --check .
+      run: black --check . --exclude="/(venv|deploy_venv|mock_venv|node_modules|cdk\.out|archive)/"
       
     - name: Run Python tests
       run: |
-        if [ -d "tests" ]; then
-          pytest tests/ -v
-        else
-          echo "No tests directory found, skipping tests"
-        fi
+        pytest tests/ -v --cov=stacks --cov=lambda_functions --cov-report=xml --cov-report=term-missing
         
-    - name: CDK Synth
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: CDK Synth Test
       run: |
+        export CDK_DEFAULT_ACCOUNT="123456789012"
+        export CDK_DEFAULT_REGION="us-east-1"
+        export ENVIRONMENT="test"
         npm run build
-        npx cdk synth
       env:
         CDK_DEFAULT_ACCOUNT: "123456789012"
         CDK_DEFAULT_REGION: "us-east-1"
+        ENVIRONMENT: "test"
 
   security-scan:
     name: Security Scan
@@ -137,7 +144,7 @@ jobs:
     - name: Deploy to AWS
       run: |
         npm run build
-        npx cdk deploy --require-approval never
+        npx cdk deploy --all --require-approval never
       env:
         ENVIRONMENT: dev
         CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -180,7 +187,7 @@ jobs:
     - name: Deploy to AWS
       run: |
         npm run build
-        npx cdk deploy --require-approval never
+        npx cdk deploy --all --require-approval never
       env:
         ENVIRONMENT: prod
         CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
