@@ -29,6 +29,7 @@ class ApiGatewayStack(Stack):
 
         # 环境配置
         env_name = os.getenv("ENVIRONMENT", "dev")
+        self.environment = env_name
 
         # 创建API Gateway
         self.api = self._create_api_gateway(env_name)
@@ -297,7 +298,7 @@ class ApiGatewayStack(Stack):
             method_responses=[apigateway.MethodResponse(status_code="200")],
         )
 
-    def _create_waf(self):
+    def _create_waf(self, env_name: str):
         """创建WAF Web ACL"""
         web_acl = wafv2.CfnWebACL(
             self,
