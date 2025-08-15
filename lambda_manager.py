@@ -14,24 +14,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class LambdaManager:
     """Lambda 函数管理器"""
-    
-    def __init__(self, region: str = 'ap-southeast-1'):
+
+    def __init__(self, region: str = "ap-southeast-1"):
         self.region = region
-        self.lambda_client = boto3.client('lambda', region_name=region)
-        self.iam_client = boto3.client('iam', region_name=region)
-        self.account_id = boto3.client('sts').get_caller_identity()['Account']
-    
-    def create_lambda_zip(self, code: str, handler_name: str = 'lambda_function.py') -> bytes:
+        self.lambda_client = boto3.client("lambda", region_name=region)
+        self.iam_client = boto3.client("iam", region_name=region)
+        self.account_id = boto3.client("sts").get_caller_identity()["Account"]
+
+    def create_lambda_zip(
+        self, code: str, handler_name: str = "lambda_function.py"
+    ) -> bytes:
         """创建 Lambda 部署包"""
         zip_buffer = io.BytesIO()
-        
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             zip_file.writestr(handler_name, code)
-        
+
         return zip_buffer.getvalue()
-    
+
     def get_opensearch_index_lambda_code(self) -> str:
         """获取 OpenSearch 索引 Lambda 函数代码"""
         return '''
@@ -184,7 +187,7 @@ def index_face(data):
         logger.error(f"索引面部时出错: {str(e)}")
         raise e
 '''
-    
+
     def get_opensearch_search_lambda_code(self) -> str:
         """获取 OpenSearch 搜索 Lambda 函数代码"""
         return '''
@@ -325,7 +328,7 @@ def search_faces(data):
         logger.error(f"搜索面部时出错: {str(e)}")
         raise e
 '''
-    
+
     def get_health_check_lambda_code(self) -> str:
         """获取健康检查 Lambda 函数代码"""
         return '''
@@ -421,129 +424,134 @@ def check_system_health():
     
     return health_status
 '''
-    
-    def deploy_lambda_function(self, function_name: str, code: str, 
-                             environment_vars: Dict[str, str] = None,
-                             role_arn: str = None) -> bool:
+
+    def deploy_lambda_function(
+        self,
+        function_name: str,
+        code: str,
+        environment_vars: Dict[str, str] = None,
+        role_arn: str = None,
+    ) -> bool:
         """部署 Lambda 函数"""
         try:
             # 创建部署包
             zip_data = self.create_lambda_zip(code)
-            
+
             # 默认环境变量
             if environment_vars is None:
                 environment_vars = {}
-            
+
             # 默认角色 ARN
             if role_arn is None:
-                role_arn = f"arn:aws:iam::{self.account_id}:role/FaceRecognitionLambdaRole"
-            
+                role_arn = (
+                    f"arn:aws:iam::{self.account_id}:role/FaceRecognitionLambdaRole"
+                )
+
             # 检查函数是否存在
             try:
                 self.lambda_client.get_function(FunctionName=function_name)
                 # 函数存在，更新代码
                 logger.info(f"更新 Lambda 函数: {function_name}")
                 self.lambda_client.update_function_code(
-                    FunctionName=function_name,
-                    ZipFile=zip_data
+                    FunctionName=function_name, ZipFile=zip_data
                 )
-                
+
                 # 更新环境变量
                 if environment_vars:
                     self.lambda_client.update_function_configuration(
                         FunctionName=function_name,
-                        Environment={'Variables': environment_vars}
+                        Environment={"Variables": environment_vars},
                     )
-                
+
             except self.lambda_client.exceptions.ResourceNotFoundException:
                 # 函数不存在，创建新函数
                 logger.info(f"创建 Lambda 函数: {function_name}")
                 self.lambda_client.create_function(
                     FunctionName=function_name,
-                    Runtime='python3.9',
+                    Runtime="python3.9",
                     Role=role_arn,
-                    Handler='lambda_function.lambda_handler',
-                    Code={'ZipFile': zip_data},
-                    Environment={'Variables': environment_vars},
+                    Handler="lambda_function.lambda_handler",
+                    Code={"ZipFile": zip_data},
+                    Environment={"Variables": environment_vars},
                     Timeout=300,
-                    MemorySize=1024
+                    MemorySize=1024,
                 )
-            
+
             logger.info(f"✅ Lambda 函数 {function_name} 部署成功")
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ 部署 Lambda 函数 {function_name} 失败: {str(e)}")
             return False
-    
-    def deploy_all_functions(self, environment: str = 'dev') -> bool:
+
+    def deploy_all_functions(self, environment: str = "dev") -> bool:
         """部署所有 Lambda 函数"""
         logger.info("🚀 开始部署所有 Lambda 函数")
-        
+
         account_id = self.account_id
-        
+
         # 环境变量配置
         common_env_vars = {
-            'FACE_METADATA_TABLE': f'face-recognition-face-metadata-{environment}',
-            'USER_VECTORS_TABLE': f'face-recognition-user-vectors-{environment}',
-            'IMAGES_BUCKET': f'face-recognition-images-{environment}-{account_id}',
-            'OPENSEARCH_INDEX': 'face-vectors',
-            'REKOGNITION_COLLECTION_ID': 'face-recognition-collection'
+            "FACE_METADATA_TABLE": f"face-recognition-face-metadata-{environment}",
+            "USER_VECTORS_TABLE": f"face-recognition-user-vectors-{environment}",
+            "IMAGES_BUCKET": f"face-recognition-images-{environment}-{account_id}",
+            "OPENSEARCH_INDEX": "face-vectors",
+            "REKOGNITION_COLLECTION_ID": "face-recognition-collection",
         }
-        
+
         # 函数配置
         functions = [
             {
-                'name': 'face-recognition-index',
-                'code': self.get_opensearch_index_lambda_code(),
-                'env_vars': {
+                "name": "face-recognition-index",
+                "code": self.get_opensearch_index_lambda_code(),
+                "env_vars": {
                     **common_env_vars,
-                    'OPENSEARCH_ENDPOINT': 'https://search-face-recognition-search-6jnoypgqjbpemnuakjuauffrqi.ap-southeast-1.es.amazonaws.com'
-                }
+                    "OPENSEARCH_ENDPOINT": "https://search-face-recognition-search-6jnoypgqjbpemnuakjuauffrqi.ap-southeast-1.es.amazonaws.com",
+                },
             },
             {
-                'name': 'face-recognition-search',
-                'code': self.get_opensearch_search_lambda_code(),
-                'env_vars': {
+                "name": "face-recognition-search",
+                "code": self.get_opensearch_search_lambda_code(),
+                "env_vars": {
                     **common_env_vars,
-                    'OPENSEARCH_ENDPOINT': 'https://search-face-recognition-search-6jnoypgqjbpemnuakjuauffrqi.ap-southeast-1.es.amazonaws.com'
-                }
+                    "OPENSEARCH_ENDPOINT": "https://search-face-recognition-search-6jnoypgqjbpemnuakjuauffrqi.ap-southeast-1.es.amazonaws.com",
+                },
             },
             {
-                'name': 'face-recognition-health',
-                'code': self.get_health_check_lambda_code(),
-                'env_vars': common_env_vars
-            }
+                "name": "face-recognition-health",
+                "code": self.get_health_check_lambda_code(),
+                "env_vars": common_env_vars,
+            },
         ]
-        
+
         success_count = 0
         for func_config in functions:
             if self.deploy_lambda_function(
-                func_config['name'],
-                func_config['code'],
-                func_config['env_vars']
+                func_config["name"], func_config["code"], func_config["env_vars"]
             ):
                 success_count += 1
-        
+
         logger.info(f"📊 部署结果: {success_count}/{len(functions)} 个函数成功")
         return success_count == len(functions)
+
 
 def main():
     """主函数"""
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Lambda 函数管理器')
-    parser.add_argument('--region', default='ap-southeast-1', help='AWS区域')
-    parser.add_argument('--environment', default='dev', help='环境')
-    parser.add_argument('--action', choices=['deploy'], default='deploy', help='操作')
-    
+
+    parser = argparse.ArgumentParser(description="Lambda 函数管理器")
+    parser.add_argument("--region", default="ap-southeast-1", help="AWS区域")
+    parser.add_argument("--environment", default="dev", help="环境")
+    parser.add_argument("--action", choices=["deploy"], default="deploy", help="操作")
+
     args = parser.parse_args()
-    
+
     manager = LambdaManager(region=args.region)
-    
-    if args.action == 'deploy':
+
+    if args.action == "deploy":
         success = manager.deploy_all_functions(environment=args.environment)
         exit(0 if success else 1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
