@@ -29,7 +29,7 @@ class ApiGatewayStack(Stack):
 
         # 环境配置
         env_name = os.getenv("ENVIRONMENT", "dev")
-        self.environment = env_name
+        self.env_name = env_name
 
         # 创建API Gateway
         self.api = self._create_api_gateway(env_name)
@@ -48,10 +48,10 @@ class ApiGatewayStack(Stack):
         log_group = logs.LogGroup(
             self,
             "ApiGatewayLogGroup",
-            log_group_name=f"/aws/apigateway/face-recognition-{self.environment}",
+            log_group_name=f"/aws/apigateway/face-recognition-{self.env_name}",
             retention=(
                 logs.RetentionDays.ONE_MONTH
-                if self.environment == "dev"
+                if self.env_name == "dev"
                 else logs.RetentionDays.SIX_MONTHS
             ),
         )
@@ -59,15 +59,15 @@ class ApiGatewayStack(Stack):
         api = apigateway.RestApi(
             self,
             "FaceRecognitionApi",
-            rest_api_name=f"face-recognition-api-{self.environment}",
+            rest_api_name=f"face-recognition-api-{self.env_name}",
             description="Face Recognition API using OpenSearch",
             endpoint_configuration=apigateway.EndpointConfiguration(
                 types=[apigateway.EndpointType.REGIONAL]
             ),
             deploy_options=apigateway.StageOptions(
-                stage_name=self.environment,
-                throttling_rate_limit=1000 if self.environment != "dev" else 100,
-                throttling_burst_limit=2000 if self.environment != "dev" else 200,
+                stage_name=self.env_name,
+                throttling_rate_limit=1000 if self.env_name != "dev" else 100,
+                throttling_burst_limit=2000 if self.env_name != "dev" else 200,
                 logging_level=apigateway.MethodLoggingLevel.INFO,
                 access_log_destination=apigateway.LogGroupLogDestination(log_group),
                 access_log_format=apigateway.AccessLogFormat.json_with_standard_fields(
@@ -350,7 +350,7 @@ class ApiGatewayStack(Stack):
         wafv2.CfnWebACLAssociation(
             self,
             "WebACLAssociation",
-            resource_arn=f"arn:aws:apigateway:{self.region}::/restapis/{self.api.rest_api_id}/stages/{self.environment}",
+            resource_arn=f"arn:aws:apigateway:{self.region}::/restapis/{self.api.rest_api_id}/stages/{self.env_name}",
             web_acl_arn=web_acl.attr_arn,
         )
 
