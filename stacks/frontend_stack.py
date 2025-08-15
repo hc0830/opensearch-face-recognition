@@ -72,9 +72,7 @@ class FrontendStack(Stack):
             default_root_object="index.html",
             # Origin configuration
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(
-                    bucket=self.frontend_bucket
-                ),
+                origin=origins.S3Origin(bucket=self.frontend_bucket),
                 # Security: Force HTTPS
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 # Performance: Enable compression

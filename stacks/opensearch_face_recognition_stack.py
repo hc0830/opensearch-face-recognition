@@ -214,8 +214,6 @@ class OpenSearchFaceRecognitionStack(Stack):
 
         return bucket
 
-
-
     def _create_outputs(self):
         """创建CloudFormation输出"""
         cdk.CfnOutput(
