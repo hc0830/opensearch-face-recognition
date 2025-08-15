@@ -43,6 +43,9 @@ class LambdaStack(Stack):
         self.search_faces_function = self._create_search_faces_function()
         self.delete_face_function = self._create_delete_face_function()
         self.batch_process_function = self._create_batch_process_function()
+        self.stats_function = self._create_stats_function()
+        self.collections_function = self._create_collections_function()
+        self.health_function = self._create_health_function()
 
         # 创建lambda_functions字典供其他stack使用
         self.lambda_functions = {
@@ -50,6 +53,9 @@ class LambdaStack(Stack):
             "search_faces": self.search_faces_function,
             "delete_face": self.delete_face_function,
             "batch_process": self.batch_process_function,
+            "stats": self.stats_function,
+            "collections": self.collections_function,
+            "health": self.health_function,
         }
 
         # TODO: 设置S3触发器 - 暂时注释以避免循环依赖
@@ -81,7 +87,7 @@ class LambdaStack(Stack):
                 "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
                 "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
                 "IMAGES_BUCKET": self.images_bucket.bucket_name,
-                "ENVIRONMENT": self.environment,
+                "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=50 if self.env_name != "dev" else 10,
@@ -107,7 +113,7 @@ class LambdaStack(Stack):
                 "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint,
                 "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
                 "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
-                "ENVIRONMENT": self.environment,
+                "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=100 if self.env_name != "dev" else 20,
@@ -133,7 +139,7 @@ class LambdaStack(Stack):
                 "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint,
                 "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
                 "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
-                "ENVIRONMENT": self.environment,
+                "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
         )
@@ -159,7 +165,7 @@ class LambdaStack(Stack):
                 "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
                 "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
                 "IMAGES_BUCKET": self.images_bucket.bucket_name,
-                "ENVIRONMENT": self.environment,
+                "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=5,
@@ -167,6 +173,74 @@ class LambdaStack(Stack):
 
         # 授予权限
         self._grant_permissions(function)
+
+        return function
+
+    def _create_stats_function(self) -> _lambda.Function:
+        """创建统计信息函数"""
+        function = lambda_python.PythonFunction(
+            self,
+            "StatsFunction",
+            entry="lambda_functions/stats",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lambda_handler",
+            timeout=Duration.minutes(1),
+            memory_size=256,
+            layers=[self.dependencies_layer],
+            environment={
+                "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint,
+                "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
+                "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
+                "ENVIRONMENT": self.env_name,
+            },
+            tracing=_lambda.Tracing.ACTIVE,
+        )
+
+        # 授予权限
+        self._grant_permissions(function)
+
+        return function
+
+    def _create_collections_function(self) -> _lambda.Function:
+        """创建集合管理函数"""
+        function = lambda_python.PythonFunction(
+            self,
+            "CollectionsFunction",
+            entry="lambda_functions/collections",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lambda_handler",
+            timeout=Duration.minutes(1),
+            memory_size=256,
+            layers=[self.dependencies_layer],
+            environment={
+                "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint,
+                "FACE_METADATA_TABLE": self.face_metadata_table.table_name,
+                "USER_VECTORS_TABLE": self.user_vectors_table.table_name,
+                "ENVIRONMENT": self.env_name,
+            },
+            tracing=_lambda.Tracing.ACTIVE,
+        )
+
+        # 授予权限
+        self._grant_permissions(function)
+
+        return function
+
+    def _create_health_function(self) -> _lambda.Function:
+        """创建健康检查函数"""
+        function = lambda_python.PythonFunction(
+            self,
+            "HealthFunction",
+            entry="lambda_functions/health",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lambda_handler",
+            timeout=Duration.seconds(30),
+            memory_size=128,
+            environment={
+                "ENVIRONMENT": self.env_name,
+            },
+            tracing=_lambda.Tracing.ACTIVE,
+        )
 
         return function
 

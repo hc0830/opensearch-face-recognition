@@ -19,6 +19,9 @@ class ApiGatewayStack(Stack):
         index_face_function: _lambda.Function,
         search_faces_function: _lambda.Function,
         delete_face_function: _lambda.Function,
+        stats_function: _lambda.Function,
+        collections_function: _lambda.Function,
+        health_function: _lambda.Function,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -26,6 +29,9 @@ class ApiGatewayStack(Stack):
         self.index_face_function = index_face_function
         self.search_faces_function = search_faces_function
         self.delete_face_function = delete_face_function
+        self.stats_function = stats_function
+        self.collections_function = collections_function
+        self.health_function = health_function
 
         # 环境配置
         env_name = os.getenv("ENVIRONMENT", "dev")
@@ -288,102 +294,44 @@ class ApiGatewayStack(Stack):
             request_models={"application/json": search_model},
         )
 
-        # /health 资源 - 健康检查
+        # /health 资源 - 健康检查（Lambda集成）
         health_resource = self.api.root.add_resource("health")
         health_resource.add_method(
             "GET",
-            apigateway.MockIntegration(
-                integration_responses=[
-                    apigateway.IntegrationResponse(
-                        status_code="200",
-                        response_templates={
-                            "application/json": '{"status": "healthy", "timestamp": "$context.requestTime"}'
-                        },
-                        response_parameters={
-                            "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
-                        },
-                    )
-                ],
-                request_templates={"application/json": '{"statusCode": 200}'},
-            ),
-            method_responses=[
-                apigateway.MethodResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": True,
-                        "method.response.header.Access-Control-Allow-Headers": True,
-                        "method.response.header.Access-Control-Allow-Methods": True,
-                    },
-                )
-            ],
+            apigateway.LambdaIntegration(self.health_function, proxy=True),
         )
 
-        # /stats 资源 - 系统统计信息
-        # 注意：当前使用Mock集成提供基础响应，生产环境中可以替换为Lambda函数实现
+        # /stats 资源 - 系统统计信息（Lambda集成）
         stats_resource = self.api.root.add_resource("stats")
         stats_resource.add_method(
             "GET",
-            apigateway.MockIntegration(
-                integration_responses=[
-                    apigateway.IntegrationResponse(
-                        status_code="200",
-                        response_templates={
-                            "application/json": '{"total_faces": 0, "total_collections": 0, "total_users": 0, "last_updated": "$context.requestTime"}'
-                        },
-                        response_parameters={
-                            "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
-                        },
-                    )
-                ],
-                request_templates={"application/json": '{"statusCode": 200}'},
-            ),
-            method_responses=[
-                apigateway.MethodResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": True,
-                        "method.response.header.Access-Control-Allow-Headers": True,
-                        "method.response.header.Access-Control-Allow-Methods": True,
-                    },
-                )
-            ],
+            apigateway.LambdaIntegration(self.stats_function, proxy=True),
         )
 
-        # /collections 资源 - 集合管理
-        # 注意：当前使用Mock集成提供基础响应，生产环境中可以替换为Lambda函数实现
+        # /collections 资源 - 集合管理（Lambda集成）
         collections_resource = self.api.root.add_resource("collections")
         collections_resource.add_method(
             "GET",
-            apigateway.MockIntegration(
-                integration_responses=[
-                    apigateway.IntegrationResponse(
-                        status_code="200",
-                        response_templates={
-                            "application/json": '[{"id": "default", "name": "Default Collection", "face_count": 0, "created_at": "$context.requestTime"}]'
-                        },
-                        response_parameters={
-                            "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-                            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
-                        },
-                    )
-                ],
-                request_templates={"application/json": '{"statusCode": 200}'},
-            ),
-            method_responses=[
-                apigateway.MethodResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": True,
-                        "method.response.header.Access-Control-Allow-Headers": True,
-                        "method.response.header.Access-Control-Allow-Methods": True,
-                    },
-                )
-            ],
+            apigateway.LambdaIntegration(self.collections_function, proxy=True),
+        )
+        collections_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(self.collections_function, proxy=True),
+        )
+
+        # /collections/{collection_id} 资源 - 特定集合管理
+        collection_id_resource = collections_resource.add_resource("{collection_id}")
+        collection_id_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(self.collections_function, proxy=True),
+        )
+        collection_id_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(self.collections_function, proxy=True),
+        )
+        collection_id_resource.add_method(
+            "DELETE",
+            apigateway.LambdaIntegration(self.collections_function, proxy=True),
         )
 
     def _create_waf(self, env_name: str):
