@@ -1,0 +1,1 @@
+# OpenSearch Face Recognition Stacks

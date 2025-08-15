@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition System - 前端测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .status {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .status-item {
+            display: inline-block;
+            margin-right: 30px;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .status-item.online {
+            border-left: 4px solid #28a745;
+        }
+        
+        .status-item.offline {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .btn.btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+        
+        .results {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .result-item.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .result-item.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .match-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .similarity-bar {
+            width: 100px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .similarity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Face Recognition System</h1>
+            <p>基于 OpenSearch 的面部识别系统 - 前端测试界面</p>
+        </div>
+        
+        <div class="status">
+            <div class="status-item" id="api-status">
+                <strong>API状态:</strong> <span id="status-text">检查中...</span>
+            </div>
+            <div class="status-item">
+                <strong>区域:</strong> ap-southeast-1 (新加坡)
+            </div>
+            <div class="status-item">
+                <strong>环境:</strong> 开发测试
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 面部索引 -->
+            <div class="section">
+                <h3>📸 面部索引</h3>
+                <div class="form-group">
+                    <label for="upload-image">选择图片:</label>
+                    <input type="file" id="upload-image" accept="image/*">
+                    <img id="image-preview" class="image-preview" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label for="user-id">用户ID:</label>
+                    <input type="text" id="user-id" placeholder="例如: user123" value="test_user_1">
+                </div>
+                <div class="form-group">
+                    <label for="collection-id">Collection ID:</label>
+                    <input type="text" id="collection-id" placeholder="例如: default" value="default">
+                </div>
+                <button class="btn" onclick="indexFace()">索引面部</button>
+            </div>
+            
+            <!-- 面部搜索 -->
+            <div class="section">
+                <h3>🔍 面部搜索</h3>
+                <div class="form-group">
+                    <label for="search-type">搜索类型:</label>
+                    <select id="search-type">
+                        <option value="by_image">通过图片搜索</option>
+                        <option value="by_face_id">通过面部ID搜索</option>
+                    </select>
+                </div>
+                <div class="form-group" id="search-image-group">
+                    <label for="search-image">选择搜索图片:</label>
+                    <input type="file" id="search-image" accept="image/*">
+                    <img id="search-image-preview" class="image-preview" style="display: none;">
+                </div>
+                <div class="form-group" id="search-face-id-group" style="display: none;">
+                    <label for="search-face-id">面部ID:</label>
+                    <input type="text" id="search-face-id" placeholder="输入面部ID">
+                </div>
+                <div class="form-group">
+                    <label for="max-faces">最大结果数:</label>
+                    <input type="number" id="max-faces" value="10" min="1" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="similarity-threshold">相似度阈值:</label>
+                    <input type="range" id="similarity-threshold" min="0" max="1" step="0.01" value="0.8">
+                    <span id="threshold-value">0.8</span>
+                </div>
+                <button class="btn" onclick="searchFaces()">搜索面部</button>
+            </div>
+            
+            <!-- 系统统计 -->
+            <div class="section">
+                <h3>📊 系统统计</h3>
+                <div id="stats-content">
+                    <button class="btn btn-success" onclick="getStats()">获取统计信息</button>
+                </div>
+            </div>
+            
+            <!-- 测试功能 -->
+            <div class="section">
+                <h3>🧪 测试功能</h3>
+                <button class="btn btn-success" onclick="testHealth()" style="margin-bottom: 10px;">健康检查</button>
+                <button class="btn" onclick="generateTestData()" style="margin-bottom: 10px;">生成测试数据</button>
+                <button class="btn btn-danger" onclick="clearResults()">清空结果</button>
+            </div>
+            
+            <!-- 数据管理 -->
+            <div class="section">
+                <h3>🗂️ 数据管理</h3>
+                <div class="form-group">
+                    <button class="btn btn-info" onclick="listCollections()" style="margin-bottom: 10px;">列出所有Collections</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="delete-collection-id">删除Collection:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="delete-collection-id" placeholder="输入Collection ID" style="flex: 1;">
+                        <button class="btn btn-warning" onclick="deleteCollection()">删除Collection</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="delete-face-id">删除特定面部:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="delete-face-id" placeholder="输入Face ID" style="flex: 1;">
+                        <button class="btn btn-warning" onclick="deleteFace()">删除面部</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-danger" onclick="deleteAllFaces()" style="margin-top: 10px;">⚠️ 删除所有数据</button>
+                    <small style="display: block; color: #dc3545; margin-top: 5px;">
+                        注意：此操作将删除所有面部数据，不可恢复！
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div class="results">
+            <div class="section">
+                <h3>📋 操作结果</h3>
+                <div id="results-container">
+                    <!-- 结果将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://v0koonddu5.execute-api.ap-southeast-1.amazonaws.com/dev';
+        
+        // 页面加载时检查API状态
+        window.onload = function() {
+            checkApiStatus();
+            setupEventListeners();
+            showWelcomeMessage();
+        };
+        
+        function setupEventListeners() {
+            // 图片预览
+            document.getElementById('upload-image').addEventListener('change', function(e) {
+                previewImage(e.target, 'image-preview');
+            });
+            
+            document.getElementById('search-image').addEventListener('change', function(e) {
+                previewImage(e.target, 'search-image-preview');
+            });
+            
+            // 搜索类型切换
+            document.getElementById('search-type').addEventListener('change', function(e) {
+                toggleSearchType(e.target.value);
+            });
+            
+            // 相似度阈值显示
+            document.getElementById('similarity-threshold').addEventListener('input', function(e) {
+                document.getElementById('threshold-value').textContent = e.target.value;
+            });
+        }
+        
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function toggleSearchType(type) {
+            const imageGroup = document.getElementById('search-image-group');
+            const faceIdGroup = document.getElementById('search-face-id-group');
+            
+            if (type === 'by_image') {
+                imageGroup.style.display = 'block';
+                faceIdGroup.style.display = 'none';
+            } else {
+                imageGroup.style.display = 'none';
+                faceIdGroup.style.display = 'block';
+            }
+        }
+        
+        async function checkApiStatus() {
+            const statusElement = document.getElementById('api-status');
+            const statusText = document.getElementById('status-text');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusElement.className = 'status-item online';
+                    statusText.textContent = '在线 ✅';
+                } else {
+                    throw new Error('API返回错误');
+                }
+            } catch (error) {
+                statusElement.className = 'status-item offline';
+                statusText.textContent = '离线 ❌';
+                addResult('error', 'API连接失败', `无法连接到 ${API_BASE_URL}，请确保Mock API服务器正在运行`);
+            }
+        }
+        
+        async function testHealth() {
+            showLoading('正在检查系统健康状态...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                hideLoading();
+                addResult('success', '健康检查', JSON.stringify(data, null, 2));
+            } catch (error) {
+                hideLoading();
+                addResult('error', '健康检查失败', error.message);
+            }
+        }
+        
+        async function indexFace() {
+            const imageFile = document.getElementById('upload-image').files[0];
+            const userId = document.getElementById('user-id').value;
+            const collectionId = document.getElementById('collection-id').value;
+            
+            if (!imageFile) {
+                addResult('error', '索引失败', '请选择一张图片');
+                return;
+            }
+            
+            if (!userId) {
+                addResult('error', '索引失败', '请输入用户ID');
+                return;
+            }
+            
+            showLoading('正在索引面部，请稍候...');
+            
+            try {
+                const base64Image = await fileToBase64(imageFile);
+                
+                const response = await fetch(`${API_BASE_URL}/faces`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: base64Image.split(',')[1], // 移除data:image/...;base64,前缀
+                        user_id: userId,
+                        collection_id: collectionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    addResult('success', '面部索引成功', JSON.stringify(data, null, 2));
+                } else {
+                    addResult('error', '面部索引失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', '面部索引失败', error.message);
+            }
+        }
+        
+        async function searchFaces() {
+            const searchType = document.getElementById('search-type').value;
+            const maxFaces = parseInt(document.getElementById('max-faces').value);
+            const similarityThreshold = parseFloat(document.getElementById('similarity-threshold').value);
+            const collectionId = document.getElementById('collection-id').value;
+            
+            let requestBody = {
+                search_type: searchType,
+                max_faces: maxFaces,
+                similarity_threshold: similarityThreshold,
+                collection_id: collectionId
+            };
+            
+            if (searchType === 'by_image') {
+                const imageFile = document.getElementById('search-image').files[0];
+                if (!imageFile) {
+                    addResult('error', '搜索失败', '请选择一张搜索图片');
+                    return;
+                }
+                const base64Image = await fileToBase64(imageFile);
+                requestBody.image = base64Image.split(',')[1];
+            } else {
+                const faceId = document.getElementById('search-face-id').value;
+                if (!faceId) {
+                    addResult('error', '搜索失败', '请输入面部ID');
+                    return;
+                }
+                requestBody.face_id = faceId;
+            }
+            
+            showLoading('正在搜索相似面部，请稍候...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    displaySearchResults(data);
+                } else {
+                    addResult('error', '面部搜索失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', '面部搜索失败', error.message);
+            }
+        }
+        
+        async function getStats() {
+            showLoading('正在获取系统统计信息...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const statsHtml = `
+                        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                            <h4>📊 系统统计</h4>
+                            <p><strong>总面部数:</strong> ${data.stats.total_faces}</p>
+                            <p><strong>总用户数:</strong> ${data.stats.total_users}</p>
+                            <p><strong>Collections:</strong> ${data.stats.collections.join(', ') || '无'}</p>
+                            <p><strong>更新时间:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                        </div>
+                    `;
+                    document.getElementById('stats-content').innerHTML = statsHtml;
+                    hideLoading();
+                    addResult('success', '统计信息获取成功', JSON.stringify(data, null, 2));
+                } else {
+                    hideLoading();
+                    addResult('error', '统计信息获取失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', '统计信息获取失败', error.message);
+            }
+        }
+        
+        async function generateTestData() {
+            showLoading('正在生成测试数据...');
+            
+            // 生成几个测试用户的面部数据
+            const testUsers = ['alice', 'bob', 'charlie'];
+            const results = [];
+            
+            for (let user of testUsers) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/faces`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1像素透明图片
+                            user_id: user,
+                            collection_id: 'test'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    results.push(`${user}: ${data.success ? '成功' : '失败'}`);
+                } catch (error) {
+                    results.push(`${user}: 错误 - ${error.message}`);
+                }
+            }
+            
+            hideLoading();
+            addResult('success', '测试数据生成完成', results.join('\n'));
+            getStats(); // 刷新统计信息
+        }
+        
+        function displaySearchResults(data) {
+            let resultHtml = `
+                <div class="result-item success">
+                    <h4>🔍 搜索结果 (${data.count} 个匹配)</h4>
+                    <p><strong>搜索类型:</strong> ${data.search_type}</p>
+                    <p><strong>参数:</strong> 最大结果数 ${data.parameters.max_faces}, 相似度阈值 ${data.parameters.similarity_threshold}</p>
+            `;
+            
+            if (data.matches && data.matches.length > 0) {
+                resultHtml += '<div style="margin-top: 15px;"><h5>匹配结果:</h5>';
+                
+                data.matches.forEach((match, index) => {
+                    const similarityPercent = match.similarity.toFixed(1);
+                    resultHtml += `
+                        <div class="match-item">
+                            <div>
+                                <strong>${match.user_id}</strong> (${match.face_id.substring(0, 8)}...)
+                                <br><small>置信度: ${match.confidence.toFixed(1)}%</small>
+                            </div>
+                            <div>
+                                <div style="text-align: right; margin-bottom: 5px;">
+                                    <small>${similarityPercent}%</small>
+                                </div>
+                                <div class="similarity-bar">
+                                    <div class="similarity-fill" style="width: ${similarityPercent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultHtml += '</div>';
+            } else {
+                resultHtml += '<p style="color: #6c757d; margin-top: 15px;">未找到匹配的面部</p>';
+            }
+            
+            resultHtml += '</div>';
+            
+            document.getElementById('results-container').innerHTML = resultHtml + document.getElementById('results-container').innerHTML;
+        }
+        
+        function addResult(type, title, content) {
+            const resultsContainer = document.getElementById('results-container');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const resultHtml = `
+                <div class="result-item ${type}">
+                    <h4>${title} <small style="color: #6c757d;">${timestamp}</small></h4>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap;">${content}</pre>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = resultHtml + resultsContainer.innerHTML;
+        }
+        
+        function showLoading(message) {
+            const resultsContainer = document.getElementById('results-container');
+            const loadingHtml = `
+                <div class="loading" id="current-loading">
+                    <div class="spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+            resultsContainer.innerHTML = loadingHtml + resultsContainer.innerHTML;
+        }
+        
+        function hideLoading() {
+            const loadingElement = document.getElementById('current-loading');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
+        
+        function showWelcomeMessage() {
+            const resultsContainer = document.getElementById('results-container');
+            const welcomeHtml = `
+                <div class="result-item success" style="border-left: 4px solid #28a745;">
+                    <h4>🎉 欢迎使用 Face Recognition System</h4>
+                    <div style="margin-top: 10px;">
+                        <p><strong>系统功能：</strong></p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>📸 <strong>面部索引</strong> - 上传图片并索引面部特征</li>
+                            <li>🔍 <strong>面部搜索</strong> - 通过图片或Face ID搜索相似面部</li>
+                            <li>📊 <strong>系统统计</strong> - 查看数据库统计信息</li>
+                            <li>🗂️ <strong>数据管理</strong> - 管理Collections和面部数据</li>
+                            <li>🧪 <strong>测试功能</strong> - 健康检查和测试数据生成</li>
+                        </ul>
+                        <p><strong>快速开始：</strong></p>
+                        <ol style="margin: 10px 0; padding-left: 20px;">
+                            <li>点击"健康检查"验证系统状态</li>
+                            <li>点击"生成测试数据"创建示例数据</li>
+                            <li>尝试上传图片进行面部索引</li>
+                            <li>使用搜索功能查找相似面部</li>
+                        </ol>
+                        <p style="color: #6c757d; font-size: 0.9em; margin-top: 15px;">
+                            🚀 提示：系统已连接真实AWS服务，包括Rekognition面部识别、DynamoDB数据存储和S3图像存储。
+                        </p>
+                    </div>
+                </div>
+            `;
+            resultsContainer.innerHTML = welcomeHtml;
+        }
+        
+        function clearResults() {
+            document.getElementById('results-container').innerHTML = `
+                <div style="text-align: center; color: #6c757d; padding: 40px;">
+                    <h4>🧹 结果已清空</h4>
+                    <p style="margin-top: 10px;">请执行操作查看新结果，或点击下方按钮：</p>
+                    <button class="btn btn-success" onclick="showWelcomeMessage()" style="margin-top: 15px;">
+                        显示欢迎信息
+                    </button>
+                </div>
+            `;
+        }
+        
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        // 数据管理功能
+        async function listCollections() {
+            showLoading('正在获取Collections列表...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/collections`);
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    let collectionsHtml = `
+                        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                            <h4>📂 Collections列表 (${data.total_collections}个)</h4>
+                    `;
+                    
+                    if (data.collections.length === 0) {
+                        collectionsHtml += '<p>暂无Collections</p>';
+                    } else {
+                        data.collections.forEach(collection => {
+                            collectionsHtml += `
+                                <div style="border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                                    <strong>Collection ID:</strong> ${collection.collection_id}<br>
+                                    <strong>面部数量:</strong> ${collection.face_count}<br>
+                                    <strong>用户数量:</strong> ${collection.user_count}<br>
+                                    <strong>用户列表:</strong> ${collection.users.join(', ')}
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    collectionsHtml += '</div>';
+                    addResult('success', 'Collections列表', JSON.stringify(data, null, 2));
+                    
+                    // 更新统计区域
+                    document.getElementById('stats-content').innerHTML = collectionsHtml;
+                } else {
+                    addResult('error', 'Collections列表获取失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', 'Collections列表获取失败', error.message);
+            }
+        }
+        
+        async function deleteCollection() {
+            const collectionId = document.getElementById('delete-collection-id').value.trim();
+            
+            if (!collectionId) {
+                addResult('error', '删除失败', '请输入Collection ID');
+                return;
+            }
+            
+            if (!confirm(`确定要删除Collection "${collectionId}" 吗？这将删除该Collection中的所有面部数据！`)) {
+                return;
+            }
+            
+            showLoading(`正在删除Collection "${collectionId}"...`);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/collections/${encodeURIComponent(collectionId)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    addResult('success', 'Collection删除成功', 
+                        `Collection "${collectionId}" 已删除\n删除了 ${data.deleted_faces} 个面部\n删除的Face IDs: ${data.deleted_face_ids.join(', ')}`);
+                    
+                    // 清空输入框
+                    document.getElementById('delete-collection-id').value = '';
+                    
+                    // 刷新统计信息
+                    getStats();
+                } else {
+                    addResult('error', 'Collection删除失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', 'Collection删除失败', error.message);
+            }
+        }
+        
+        async function deleteFace() {
+            const faceId = document.getElementById('delete-face-id').value.trim();
+            
+            if (!faceId) {
+                addResult('error', '删除失败', '请输入Face ID');
+                return;
+            }
+            
+            if (!confirm(`确定要删除Face ID "${faceId}" 吗？`)) {
+                return;
+            }
+            
+            showLoading(`正在删除Face ID "${faceId}"...`);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/faces/${encodeURIComponent(faceId)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    addResult('success', '面部删除成功', `Face ID "${faceId}" 已成功删除`);
+                    
+                    // 清空输入框
+                    document.getElementById('delete-face-id').value = '';
+                    
+                    // 刷新统计信息
+                    getStats();
+                } else {
+                    addResult('error', '面部删除失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', '面部删除失败', error.message);
+            }
+        }
+        
+        async function deleteAllFaces() {
+            if (!confirm('⚠️ 警告：确定要删除所有面部数据吗？\n\n这将删除：\n- 所有面部记录\n- 所有用户数据\n- 所有Collections\n\n此操作不可恢复！')) {
+                return;
+            }
+            
+            if (!confirm('最后确认：真的要删除所有数据吗？')) {
+                return;
+            }
+            
+            showLoading('正在删除所有面部数据...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/faces`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                hideLoading();
+                if (data.success) {
+                    addResult('success', '所有数据删除成功', 
+                        `已删除：\n- ${data.deleted_faces} 个面部记录\n- ${data.deleted_users} 个用户记录\n- 所有Collections已清空`);
+                    
+                    // 刷新统计信息
+                    getStats();
+                } else {
+                    addResult('error', '数据删除失败', data.error);
+                }
+            } catch (error) {
+                hideLoading();
+                addResult('error', '数据删除失败', error.message);
+            }
+        }
+    </script>
+</body>
+</html>
