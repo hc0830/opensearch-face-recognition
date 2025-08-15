@@ -12,6 +12,7 @@ from stacks.opensearch_face_recognition_stack import OpenSearchFaceRecognitionSt
 from stacks.lambda_stack import LambdaStack
 from stacks.api_gateway_stack import ApiGatewayStack
 from stacks.monitoring_stack import MonitoringStack
+from stacks.frontend_stack import FrontendStack
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -69,6 +70,15 @@ def main():
         description="API Gateway for face recognition REST API",
     )
 
+    # Deploy Frontend stack (CloudFront + S3)
+    frontend_stack = FrontendStack(
+        app,
+        f"{stack_prefix}-Frontend",
+        api_gateway_url=api_stack.api.url,
+        env=env,
+        description="CloudFront distribution and S3 hosting for frontend",
+    )
+
     # Deploy monitoring stack
     monitoring_stack = MonitoringStack(
         app,
@@ -83,10 +93,17 @@ def main():
     # Add dependencies
     lambda_stack.add_dependency(opensearch_stack)
     api_stack.add_dependency(lambda_stack)
+    frontend_stack.add_dependency(api_stack)  # Frontend needs API Gateway URL
     monitoring_stack.add_dependency(api_stack)
 
     # Add tags to all stacks
-    for stack in [opensearch_stack, lambda_stack, api_stack, monitoring_stack]:
+    for stack in [
+        opensearch_stack,
+        lambda_stack,
+        api_stack,
+        frontend_stack,
+        monitoring_stack,
+    ]:
         stack.tags.set_tag("Project", "OpenSearchFaceRecognition")
         stack.tags.set_tag("Environment", environment)
         stack.tags.set_tag("ManagedBy", "CDK")
