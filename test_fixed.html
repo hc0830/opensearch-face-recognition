@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test - Fixed</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test - Fixed Version</h1>
+    <div id="result">Testing API connection...</div>
+    <script>
+        const API_BASE_URL = 'https://deheoet323.execute-api.ap-southeast-1.amazonaws.com/prod';
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('Fetching:', API_BASE_URL + '/health');
+                const response = await fetch(API_BASE_URL + '/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ API Connection Successful!</p>
+                        <h3>Response Data:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <h3>Response Headers:</h3>
+                        <pre>${[...response.headers.entries()].map(([k,v]) => `${k}: ${v}`).join('\n')}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API Response Error: ${response.status}</p>`;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Network Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Test immediately when page loads
+        testAPI();
+        
+        // Add a button to test again
+        setTimeout(() => {
+            const button = document.createElement('button');
+            button.textContent = 'Test Again';
+            button.onclick = testAPI;
+            document.body.appendChild(button);
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <div id="result"></div>
+    <script>
+        const API_BASE_URL = 'https://deheoet323.execute-api.ap-southeast-1.amazonaws.com/prod';
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing API connection...';
+            
+            try {
+                console.log('Fetching:', API_BASE_URL + '/health');
+                const response = await fetch(API_BASE_URL + '/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = '<p style="color: green;">✅ API Connection Successful!</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ API Response Error: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML = '<p style="color: red;">❌ Network Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test immediately when page loads
+        testAPI();
+    </script>
+</body>
+</html>
