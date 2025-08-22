@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_iam as iam,
     aws_s3_notifications as s3n,
+    aws_ec2 as ec2,
     Duration,
 )
 from constructs import Construct
@@ -23,6 +24,7 @@ class LambdaStack(Stack):
         face_metadata_table: dynamodb.Table,
         user_vectors_table: dynamodb.Table,
         images_bucket: s3.Bucket,
+        vpc: ec2.Vpc,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -31,9 +33,13 @@ class LambdaStack(Stack):
         self.face_metadata_table = face_metadata_table
         self.user_vectors_table = user_vectors_table
         self.images_bucket = images_bucket
+        self.vpc = vpc
 
         # 环境配置
         self.env_name = os.getenv("ENVIRONMENT", "dev")
+
+        # 创建Lambda安全组
+        self.lambda_security_group = self._create_lambda_security_group()
 
         # 创建Lambda层
         self.dependencies_layer = self._create_dependencies_layer()
@@ -60,6 +66,25 @@ class LambdaStack(Stack):
 
         # TODO: 设置S3触发器 - 暂时注释以避免循环依赖
         # self._setup_s3_triggers()
+
+    def _create_lambda_security_group(self) -> ec2.SecurityGroup:
+        """创建Lambda函数安全组"""
+        sg = ec2.SecurityGroup(
+            self,
+            "LambdaSecurityGroup",
+            vpc=self.vpc,
+            description="Security group for Lambda functions accessing OpenSearch",
+            allow_all_outbound=True,
+        )
+        
+        # Lambda函数需要出站HTTPS访问来连接OpenSearch
+        sg.add_egress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
+            connection=ec2.Port.tcp(443),
+            description="HTTPS access to OpenSearch",
+        )
+        
+        return sg
 
     def _create_dependencies_layer(self) -> _lambda.LayerVersion:
         """创建依赖层"""
@@ -91,6 +116,11 @@ class LambdaStack(Stack):
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=50 if self.env_name != "dev" else 10,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限
@@ -117,6 +147,11 @@ class LambdaStack(Stack):
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=100 if self.env_name != "dev" else 20,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限
@@ -142,6 +177,11 @@ class LambdaStack(Stack):
                 "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限
@@ -169,6 +209,11 @@ class LambdaStack(Stack):
             },
             tracing=_lambda.Tracing.ACTIVE,
             reserved_concurrent_executions=5,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限
@@ -194,6 +239,11 @@ class LambdaStack(Stack):
                 "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限
@@ -219,6 +269,11 @@ class LambdaStack(Stack):
                 "ENVIRONMENT": self.env_name,
             },
             tracing=_lambda.Tracing.ACTIVE,
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[self.lambda_security_group],
         )
 
         # 授予权限

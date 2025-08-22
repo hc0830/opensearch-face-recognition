@@ -189,16 +189,13 @@ def index_face_from_bytes(
         if not detect_response["FaceDetails"]:
             return {"success": False, "error": "No faces detected in the image"}
 
-        # 创建临时collection用于获取面部向量
-        temp_collection = f"temp-{uuid.uuid4().hex[:8]}"
+        # 使用现有的collection
+        rekognition_collection = "face-recognition-collection"
 
         try:
-            # 创建临时collection
-            rekognition.create_collection(CollectionId=temp_collection)
-
-            # 索引面部到临时collection
+            # 索引面部到现有collection
             index_response = rekognition.index_faces(
-                CollectionId=temp_collection,
+                CollectionId=rekognition_collection,
                 Image={"Bytes": image_bytes},
                 MaxFaces=1,
                 QualityFilter="AUTO",
@@ -250,12 +247,9 @@ def index_face_from_bytes(
                 "bounding_box": face_record["Face"]["BoundingBox"],
             }
 
-        finally:
-            # 清理临时collection
-            try:
-                rekognition.delete_collection(CollectionId=temp_collection)
-            except:
-                pass
+        except Exception as e:
+            logger.error(f"Error during face indexing: {str(e)}")
+            raise
 
     except Exception as e:
         logger.error(f"Error indexing face: {str(e)}")
@@ -283,11 +277,17 @@ def index_to_opensearch(face_id: str, doc: Dict[str, Any]):
     """索引文档到OpenSearch"""
     try:
         from opensearchpy import OpenSearch, RequestsHttpConnection
-        from aws_requests_auth.aws_auth import AWSRequestsAuth
+        from requests_aws4auth import AWS4Auth
 
         # 创建OpenSearch客户端
         credentials = boto3.Session().get_credentials()
-        awsauth = AWSRequestsAuth(credentials, os.environ["AWS_REGION"], "es")
+        awsauth = AWS4Auth(
+            credentials.access_key,
+            credentials.secret_key,
+            os.environ["AWS_REGION"],
+            "es",
+            session_token=credentials.token,
+        )
 
         client = OpenSearch(
             hosts=[{"host": OPENSEARCH_ENDPOINT.replace("https://", ""), "port": 443}],
