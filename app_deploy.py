@@ -55,6 +55,7 @@ def main():
         face_metadata_table=opensearch_stack.face_metadata_table,
         user_vectors_table=opensearch_stack.user_vectors_table,
         images_bucket=opensearch_stack.images_bucket,
+        vpc=opensearch_stack.vpc,
         env=env,
         description="Lambda functions for face recognition processing",
     )
