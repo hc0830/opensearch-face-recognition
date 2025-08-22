@@ -76,14 +76,14 @@ class LambdaStack(Stack):
             description="Security group for Lambda functions accessing OpenSearch",
             allow_all_outbound=True,
         )
-        
+
         # Lambda函数需要出站HTTPS访问来连接OpenSearch
         sg.add_egress_rule(
             peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(443),
             description="HTTPS access to OpenSearch",
         )
-        
+
         return sg
 
     def _create_dependencies_layer(self) -> _lambda.LayerVersion:
